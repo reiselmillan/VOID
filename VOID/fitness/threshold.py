@@ -10,7 +10,7 @@ DEFAULT_STEP = False
 
 
 class ThresholdFitness(Fitness):
-    def __init__(self, threshold=THRESHOLD, structure="complex", step=False, **kwargs):
+    def __init__(self, threshold=THRESHOLD, structure="complex", step=False, constraint=[], **kwargs):
         """Fitness is positive if the minimum distance is above
             the given threshold.
 
@@ -18,10 +18,12 @@ class ThresholdFitness(Fitness):
             threshold (float)
             structure (str): defines to which structure the threshold will
                 be applied. Can be either complex, guest or host.
+            constraint (list): indices of sites that will actually used. The rest are discarded
         """
         super().__init__()
         self.threshold = threshold
         self.step = step
+        self.constraint = constraint
 
         if structure not in STRUCTURE_CHOICES:
             raise ValueError(
@@ -43,6 +45,13 @@ class ThresholdFitness(Fitness):
             choices=STRUCTURE_CHOICES,
             help="threshold for distance calculations (default: %(default)s)",
             default=DEFAULT_STRUCTURE,
+        )
+        parser.add_argument(
+            "--constraint",
+            type=int,
+            nargs ="+",
+            help="indices of the sites ",
+            default=[],
         )
 
     def get_distances(self, complex):
@@ -93,3 +102,13 @@ class SumInvDistanceFitness(ThresholdFitness):
         distances = distances[distances < 2 * self.threshold]
 
         return self.normalize(-np.mean(1 / distances))
+
+class MaxRadialDistance(ThresholdFitness):
+    PARSER_NAME = "max_radial_distance"
+    HELP = "Complexes have positive score if the sum of distances is above the given threshold"
+
+    def __call__(self, complex):
+        if not self.constraint: # an empty list would throw an error when calling min()
+            return self.normalize(-(self.get_distances(complex).min() - self.threshold)) 
+        
+        return self.normalize(-(self.get_distances(complex)[self.constraint].min() - self.threshold))
