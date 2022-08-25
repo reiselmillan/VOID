@@ -64,6 +64,9 @@ class Docker(ParseableObject):
         )
 
     def apply_constraint(self, points):
+        if not self.constraint:
+            return points
+            
         diff = points - self.host.cart_coords[self.constraint]
         diff2 = (diff * diff).sum(axis=1)
    
