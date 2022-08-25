@@ -21,6 +21,10 @@ class Docker(ParseableObject):
         self.sampler = sampler
         self.fitness = fitness
 
+        self.constraint = []
+        if "constraint" in kwargs:
+            self.constraint = kwargs['constraint']
+
     @staticmethod
     def add_arguments(parser):
         parser.add_argument(
@@ -59,11 +63,21 @@ class Docker(ParseableObject):
             add_transform=False
         )
 
+    def apply_constraint(self, points):
+        diff = points - self.host.cart_coords[self.constraint]
+        diff2 = (diff * diff).sum(axis=1)
+   
+        filtered_inds = np.where(diff2 < 64)
+        return points[filtered_inds]
+
     def dock(self, attempts: int) -> List[Complex]:
         """Docks the guest into the host.
         """
         complexes = []
-        for point in self.sampler.get_points(self.host):
+        # apply constraint
+        points = self.sampler.get_points(self.host)
+        points = self.apply_constraint(points)
+        for point in points:
             complexes += self.dock_at_point(point, attempts)
 
         complexes = self.rank_complexes(complexes)
