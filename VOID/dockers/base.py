@@ -21,9 +21,9 @@ class Docker(ParseableObject):
         self.sampler = sampler
         self.fitness = fitness
 
-        self.constraint = []
-        if "constraint" in kwargs:
-            self.constraint = kwargs['constraint']
+        self.constraint = kwargs.get("constraint", [])
+        self.sphere = kwargs.get("sphere", 5)
+        self.max_num_of_sites = kwargs.get("max_num_sites", None)
 
     @staticmethod
     def add_arguments(parser):
@@ -66,11 +66,13 @@ class Docker(ParseableObject):
     def apply_constraint(self, points):
         if not self.constraint:
             return points
-            
+
         diff = points - self.host.cart_coords[self.constraint]
         diff2 = (diff * diff).sum(axis=1)
    
-        filtered_inds = np.where(diff2 < 64)
+        filtered_inds = np.where(diff2 < self.sphere**2)
+        if self.max_num_of_sites is not None and self.max_num_of_sites < len(filtered_inds):
+            return points[filtered_inds][:self.max_num_of_sites]
         return points[filtered_inds]
 
     def dock(self, attempts: int) -> List[Complex]:
