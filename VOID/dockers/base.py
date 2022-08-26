@@ -23,7 +23,7 @@ class Docker(ParseableObject):
 
         self.constraint = kwargs.get("constraint", [])
         self.sphere = kwargs.get("sphere", 5)
-        self.max_num_of_sites = kwargs.get("max_num_sites", None)
+        self.max_num_sites = kwargs.get("max_num_sites", None)
 
     @staticmethod
     def add_arguments(parser):
@@ -70,9 +70,7 @@ class Docker(ParseableObject):
         diff = points - self.host.cart_coords[self.constraint]
         diff2 = (diff * diff).sum(axis=1)
    
-        filtered_inds = np.where(diff2 < self.sphere**2)
-        if self.max_num_of_sites is not None and self.max_num_of_sites < len(filtered_inds):
-            return points[filtered_inds][:self.max_num_of_sites]
+        filtered_inds = np.where(diff2 < self.sphere**2)[0]
         return points[filtered_inds]
 
     def dock(self, attempts: int) -> List[Complex]:
@@ -84,6 +82,8 @@ class Docker(ParseableObject):
         points = self.apply_constraint(points)
         for point in points:
             complexes += self.dock_at_point(point, attempts)
+            if len(complexes) > self.max_num_sites:
+                break
 
         complexes = self.rank_complexes(complexes)
 
