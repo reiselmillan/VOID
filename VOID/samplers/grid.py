@@ -23,13 +23,18 @@ class LocalizedGridSampler(Sampler):
         )
 
     def get_points(self, structure):
+        print(self.lattice)
         x = np.linspace(-self.lattice/2, self.lattice/2, self.density) # centered on zeo
+        print(x)
         X, Y, Z = np.meshgrid(x, x, x)
         grid = np.vstack((X.flatten(), Y.flatten(),Z.flatten())).T
         for idx in self.centers:
             coor = structure.cart_coords[idx]
             if "fullgrid" not in locals():
                 fullgrid = grid + coor
+                print("coords: ", coor)
             else:
                 fullgrid = np.vstack(fullgrid, grid + coor)
+        elems = np.array([3 for _ in range(len(fullgrid))]).reshape(-1, 1)
+        np.savetxt("points.xyz", np.hstack((elems, fullgrid)))
         return fullgrid

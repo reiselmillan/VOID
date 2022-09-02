@@ -23,7 +23,7 @@ class Docker(ParseableObject):
 
         self.constraint = kwargs.get("constraint", [])
         self.sphere = kwargs.get("sphere", 5)
-        self.max_num_sites = kwargs.get("max_num_sites", None)
+        self.max_num_sites = kwargs.get("max_num_sites", float("inf"))
 
     @staticmethod
     def add_arguments(parser):
